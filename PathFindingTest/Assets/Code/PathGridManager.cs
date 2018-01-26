@@ -17,6 +17,7 @@ public class PathGridManager : MonoBehaviour
     private int m_iNodeAmountX, m_iNodeAmountY;
     private bool m_bBlocked;        
 
+    // Debugging
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(m_vGridSize.x, 1, m_vGridSize.y));        
@@ -42,11 +43,15 @@ public class PathGridManager : MonoBehaviour
         CreateGrid();
     }
 
+    /// <summary>
+    /// Creates node grid for pathfinding and also checks if there are obstacles in nodes.
+    /// </summary>
     private void CreateGrid()
     {
         m_vStartPos = new Vector3(transform.position.x - ((m_vGridSize.x / 2) - m_fPathNodeWidth),
             transform.position.y + 0, transform.position.z - ((m_vGridSize.y / 2) - m_fPathNodeWidth));
 
+        // Calculates amount of nodes in grid. 
         m_iNodeAmountX = (int)(m_vGridSize.x / (m_fPathNodeWidth * 2));
         m_iNodeAmountY = (int)(m_vGridSize.y / (m_fPathNodeWidth * 2));
         m_aGrid = new Node[m_iNodeAmountX, m_iNodeAmountY];
@@ -54,6 +59,7 @@ public class PathGridManager : MonoBehaviour
         //Debug.Log("X: " + m_iNodeAmountX);
         //Debug.Log("Y: " + m_iNodeAmountY);        
 
+        // Creates 2D node grid.
         for (int x = 0; x < m_iNodeAmountX; x++)
         {
             for (int y = 0; y < m_iNodeAmountY; y++)
@@ -61,13 +67,18 @@ public class PathGridManager : MonoBehaviour
                 m_vNodePos = new Vector3(m_vStartPos.x + (x * m_fPathNodeWidth * 2), 0,
                     m_vStartPos.z + (y * m_fPathNodeWidth * 2));
 
+                // Checks if node is blocked by obstacle collider.
                 m_bBlocked = Physics.CheckSphere(m_vNodePos, m_fPathNodeWidth, m_ObstacleMask);
-                m_aGrid[x, y] = new Node(m_bBlocked, m_vNodePos, x, y);
-                //Debug.Log("NodePos: " + m_vNodePos);
+                m_aGrid[x, y] = new Node(m_bBlocked, m_vNodePos, x, y);                
             }
         }
     }
 
+    /// <summary>
+    /// Calculates corresponding node in the grid from target objects position.
+    /// </summary>
+    /// <param name="position">Vector3 position of the object</param>
+    /// <returns>Corresponding node</returns>
     public Node NodeFromWorldPosition(Vector3 position)
     {
         float xf = (-transform.position.x + position.x + (m_vGridSize.x / 2)) / m_vGridSize.x;
@@ -78,16 +89,24 @@ public class PathGridManager : MonoBehaviour
 
         //Debug.Log("xf: " + xf);
 
+        // Clamps node selection to prevent out of bounds error from list.
         int x = (int)Mathf.Clamp(m_iNodeAmountX * xf, 0, m_iNodeAmountX - 1);
         int y = (int)Mathf.Clamp(m_iNodeAmountY * yf, 0, m_iNodeAmountY - 1);
 
         //Debug.Log("CapsPos: " + position);
-        //Debug.Log("X: " + x + "/Y: " + y);        
+        //Debug.Log("X: " + x + "/Y: " + y); 
+        
+        // Gets nodes neighbours.
         GetNeighbours(m_aGrid[x, y]);
 
         return m_aGrid[x, y];
     }
 
+    /// <summary>
+    /// Searches nodes neighbouring nodes.
+    /// </summary>
+    /// <param name="node">Target node</param>
+    /// <returns>List of target nodes neighbours</returns>
     public List<Node> GetNeighbours(Node node)
     {
         List<Node> neighbours = new List<Node>();        
@@ -107,6 +126,7 @@ public class PathGridManager : MonoBehaviour
             }
         }
 
+        // Do not use this if AStar script is in use.
         //foreach (Node n in neighbours)
         //{
         //    Debug.Log("Node posX: " + n.m_iGridX + " Node posY: " + n.m_iGridY);
