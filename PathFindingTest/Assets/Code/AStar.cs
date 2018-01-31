@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 /// <summary>
 /// A* pathfinding.
@@ -33,59 +34,70 @@ public class AStar : MonoBehaviour {
     {
         Node startNode = m_Grid.NodeFromWorldPosition(start);
         Node endNode = m_Grid.NodeFromWorldPosition(end);
-
-        List<Node> openSet = new List<Node>();
+                
+        Heap<Node> openSet = new Heap<Node>(m_Grid.m_iNodeAmountX * m_Grid.m_iNodeAmountY);
         List<Node> closedSet = new List<Node>();
 
         // Add start node directly to openSet.
         openSet.Add(startNode);
-                
-        // 
+                        
         while(openSet.Count > 0)
         {
-            Node currentNode = openSet[0];
-            for (int i = 0; i < openSet.Count; i++)
+            Node currentNode = openSet.RemoveFirst();           
+            closedSet.Add(currentNode);
+            currentNode.m_bProcessed = true;
+
+            // If current node is same as end node then path is retraced
+            // And processed nodes reset.
+            if (currentNode == endNode)
             {
-                // Checks if current nodes f-cost is lower or same and h-cost is lower than node's that is already contained in openSet list
-                if (openSet[i].m_iFCost < currentNode.m_iFCost || (openSet[i].m_iFCost == currentNode.m_iFCost &&
-                    openSet[i].m_iHCost < currentNode.m_iHCost))
-                    currentNode = openSet[i];
-
-                // If true, node is removed from openSet and added to closedSet.
-                openSet.Remove(currentNode);
-                closedSet.Add(currentNode);
-
-                // If current node is same as end node then path is retraced.
-                if (currentNode == endNode)
-                    return RetracePath(startNode, endNode);
-
-                // Checks nodes neighbouring nodes.
-                foreach (Node neighbour in m_Grid.GetNeighbours(currentNode))
-                {
-                    // If node is blocked or is already containded in openSet.
-                    if (neighbour.m_bIsBlocked || closedSet.Contains(neighbour))
-                        continue;
-
-                    // Calculates movement cost.
-                    int NewMovementCost = currentNode.m_iGCost + GetDistance(currentNode, neighbour);
-
-                    // Checks if current nodes movement cost is cheaper than next nodes or it isn't already contained in openSet. 
-                    if (NewMovementCost < neighbour.m_iGCost || !openSet.Contains(neighbour))
-                    {
-                        // If true, current node is set as a parent node, and G- & H-cost is calculated.
-                        neighbour.m_iGCost = NewMovementCost;
-                        neighbour.m_iHCost = GetDistance(neighbour, endNode);
-                        neighbour.m_nParent = currentNode;
-
-                        // And it is added to openSet if not already in it.
-                        if (!openSet.Contains(neighbour))
-                            openSet.Add(neighbour);                        
-                    }
-                }
+                ResetProcessedNodes(closedSet);
+                return RetracePath(startNode, endNode);
             }
+
+            // Checks nodes neighbouring nodes.
+            foreach (Node neighbour in currentNode.m_aNeighbours)
+            {
+                // If node is blocked or is already already processed.
+                if (neighbour.m_bIsBlocked || neighbour.m_bProcessed)
+                    continue;
+
+                // Calculates movement cost.
+                int NewMovementCost = currentNode.m_iGCost + GetDistance(currentNode, neighbour);
+
+                // Checks if current nodes movement cost is cheaper than next nodes or it isn't already contained in openSet. 
+                if (NewMovementCost < neighbour.m_iGCost || !openSet.Contains(neighbour))
+                {
+                    // If true, current node is set as a parent node, and G- & H-cost is calculated.
+                    neighbour.m_iGCost = NewMovementCost;
+                    neighbour.m_iHCost = GetDistance(neighbour, endNode);
+                    neighbour.m_nParent = currentNode;
+
+                    // And it is added to openSet if not already in it.
+                    if (!openSet.Contains(neighbour))
+                        openSet.Add(neighbour);
+                    else
+                        openSet.UpdateItem(neighbour);
+                }
+            }            
         }
-        // if no path is found then return null.
+
+        // if no path is found then return null and reset nodes.
+        ResetProcessedNodes(closedSet);
         return null;
+    }
+
+
+    /// <summary>
+    /// Resets nodes processed parameter back to false.
+    /// </summary>
+    /// <param name="closedSet">List of processed nodes</param>
+    private void ResetProcessedNodes(List<Node> closedSet)
+    {
+        for (int i = 0; i < closedSet.Count; i++)
+        {
+            closedSet[i].m_bProcessed = false;
+        }
     }
 
     /// <summary>
@@ -121,8 +133,8 @@ public class AStar : MonoBehaviour {
     /// <returns>Calculated score between nodes</returns>
     private int GetDistance(Node nodeA, Node nodeB)
     {
-        int iDistX = Mathf.Abs(nodeA.m_iGridX - nodeB.m_iGridX);
-        int iDistY = Mathf.Abs(nodeA.m_iGridY - nodeB.m_iGridY);
+        int iDistX = Math.Abs(nodeA.m_iGridX - nodeB.m_iGridX);
+        int iDistY = Math.Abs(nodeA.m_iGridY - nodeB.m_iGridY);
 
         if (iDistX > iDistY)        
             return 14 * iDistY + 10 * (iDistX - iDistY);        

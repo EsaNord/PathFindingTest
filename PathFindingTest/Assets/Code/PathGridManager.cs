@@ -9,12 +9,12 @@ public class PathGridManager : MonoBehaviour
     public float m_fPathNodeWidth;
     public GameObject m_goCapsule;
     public List<Node> path;
+    public int m_iNodeAmountX, m_iNodeAmountY;
 
     Node[,] m_aGrid;
 
     private Vector3 m_vNodePos;
-    private Vector3 m_vStartPos;
-    private int m_iNodeAmountX, m_iNodeAmountY;
+    private Vector3 m_vStartPos;    
     private bool m_bBlocked;        
 
     // Debugging
@@ -72,6 +72,14 @@ public class PathGridManager : MonoBehaviour
                 m_aGrid[x, y] = new Node(m_bBlocked, m_vNodePos, x, y);                
             }
         }
+
+        for (int x = 0; x < m_iNodeAmountX; x++)
+        {
+            for (int y = 0; y < m_iNodeAmountY; y++)
+            {
+                m_aGrid[x, y].m_aNeighbours = GetNeighbours(m_aGrid[x, y]);
+            }
+        }
     }
 
     /// <summary>
@@ -124,13 +132,7 @@ public class PathGridManager : MonoBehaviour
                     neighbours.Add(m_aGrid[checkX, checkY]);
                 }
             }
-        }
-
-        // Do not use this if AStar script is in use.
-        //foreach (Node n in neighbours)
-        //{
-        //    Debug.Log("Node posX: " + n.m_iGridX + " Node posY: " + n.m_iGridY);
-        //}        
+        }        
         
         return neighbours;
     }
