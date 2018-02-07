@@ -35,7 +35,7 @@ public class AStar : MonoBehaviour {
         Node startNode = m_Grid.NodeFromWorldPosition(start);
         Node endNode = m_Grid.NodeFromWorldPosition(end);
                 
-        Heap<Node> openSet = new Heap<Node>(m_Grid.m_iNodeAmountX * m_Grid.m_iNodeAmountY);
+        Heap<Node> openSet = new Heap<Node>((m_Grid.m_iNodeAmountX * m_Grid.m_iNodeAmountY));
         List<Node> closedSet = new List<Node>();
 
         // Add start node directly to openSet.

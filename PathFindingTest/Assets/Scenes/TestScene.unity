@@ -1291,6 +1291,8 @@ MonoBehaviour:
   m_vGridSize: {x: 30, y: 30}
   m_fPathNodeWidth: 0.5
   m_goCapsule: {fileID: 2116162380}
+  m_iNodeAmountX: 0
+  m_iNodeAmountY: 0
 --- !u!4 &1876885139
 Transform:
   m_ObjectHideFlags: 0
